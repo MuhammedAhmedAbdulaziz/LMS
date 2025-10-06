@@ -1,0 +1,106 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>User Dashboard</h1>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <h2>Search for Books</h2>
+        <div class="search-container">
+            <form action="{{ url_for('user_dashboard') }}" method="get" class="search-form">
+                <input type="search" name="search" placeholder="Search by title or author..." value="{{ search_query or '' }}">
+                <button type="submit" class="btn">Search</button>
+            </form>
+            <a href="{{ url_for('user_dashboard', show_all='true') }}" class="btn btn-secondary">Show All Available</a>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if available_books %}
+                        {% for book in available_books %}
+                        <tr>
+                            <td>{{ book.id }}</td>
+                            <td>{{ book.title }}</td>
+                            <td>{{ book.author }}</td>
+                            <td>{{ book.category }}</td>
+                            <td>
+                                <form action="{{ url_for('borrow') }}" method="post" class="inline-form">
+                                    <input type="hidden" name="book_id" value="{{ book.id }}">
+                                    <input type="number" name="days_to_borrow" placeholder="Days" min="1" required class="short-input">
+                                    <button type="submit" class="btn btn-small">Borrow</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">
+                                {% if search_query %}
+                                    No books found matching your search.
+                                {% else %}
+                                    Please enter a search term or click "Show All" to see available books.
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>My Borrowing History</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Borrowed On</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in history %}
+                    <tr>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.borrow_date.split(' ')[0] }}</td>
+                        <td>{{ item.due_date.split(' ')[0] }}</td>
+                        <td>
+                            {% if item.return_date %}
+                                <span class="status-returned">Returned on {{ item.return_date.split(' ')[0] }}</span>
+                            {% else %}
+                                <span class="status-borrowed">Borrowed</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                             {% if not item.return_date %}
+                                <form action="{{ url_for('return_book') }}" method="post" class="inline-form">
+                                    <input type="hidden" name="book_id" value="{{ item.book_id }}">
+                                    <button type="submit" class="btn btn-small btn-secondary">Return</button>
+                                </form>
+                             {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">You have no borrowing history.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
