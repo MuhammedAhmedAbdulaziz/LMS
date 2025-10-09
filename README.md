@@ -35,15 +35,12 @@ The Library Management System is designed to replace traditional command-line in
 
 #### **1. Modern Welcome Page**
 A single, switchable form for both user Login and Sign Up.
-![Welcome Page](https://i.imgur.com/eBfJ94c.png)
 
 #### **2. User Dashboard**
 Features a powerful book search, a list of available books, and personal borrowing history.
-![User Dashboard](https://i.imgur.com/gK9t0u1.png)
 
 #### **3. Admin Dashboard**
 A comprehensive panel for full control over the book catalog, user accounts, and all system transactions.
-![Admin Dashboard](https://i.imgur.com/E8w9t8F.png)
 
 ---
 
