@@ -1,7 +1,5 @@
 # Library Management System - Web Application
 
-![Library System Welcome Page](https://i.imgur.com/eBfJ94c.png)
-
 A full-featured, role-based web application for managing a library's book catalog and borrowing activities. Built with Python and the Flask web framework, this project provides a clean, interactive user interface for both standard users and administrators.
 
 ---
