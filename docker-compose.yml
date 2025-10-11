@@ -1,0 +1,25 @@
+# Specify the Docker Compose file format version
+version: '3.8'
+
+# Define the services (containers) that make up your app
+services:
+  # Name our service "web"
+  web:
+    # Build the Docker image from the Dockerfile in the current directory (.)
+    build: .
+    
+    # Map port 5000 on the host machine to port 5000 in the container
+    # This lets you access the app at http://localhost:5000
+    ports:
+      - "5000:5000"
+      
+    # Mount the current directory on the host to /app in the container
+    # This is incredibly useful for development for two reasons:
+    # 1. Live Reload: Any changes you make to your code on your computer will
+    #    be instantly reflected inside the container, and Flask's debug mode
+    #    will automatically restart the server.
+    # 2. Data Persistence: The SQLite database file (library.db) will be
+    #    stored on your computer, not inside the container. This means your
+    #    data will persist even if you stop and remove the container.
+    volumes:
+      - .:/app
