@@ -1,11 +1,10 @@
-# app.py
-
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from functools import wraps
 import database
 import auth
 import user_operations as user_ops
 import admin_operations as admin_ops
+import time
 
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key_for_dev'
@@ -182,5 +181,14 @@ def create_user():
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == "__main__":
-    database.create_tables() 
-    app.run(debug=True)
+    # Give PostgreSQL time to start
+
+    print("⏳ Waiting for database connection...")
+    time.sleep(10)
+    
+    # Create tables
+    print("🗃️ Creating database tables...")
+    database.create_tables()
+    
+    print("🚀 Starting Flask application...")
+    app.run(debug=True, host='0.0.0.0', port=5000)

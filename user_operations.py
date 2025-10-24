@@ -1,7 +1,24 @@
-# user_operations.py
-
 from database import get_db_connection
 from datetime import datetime, timedelta
+
+def tuple_to_book_dict(tuple_data):
+    """Convert database tuple to dictionary for templates"""
+    return {
+        'id': tuple_data[0],
+        'title': tuple_data[1],
+        'author': tuple_data[2],
+        'category': tuple_data[3]
+    }
+
+def tuple_to_history_dict(tuple_data):
+    """Convert history tuple to dictionary for templates"""
+    return {
+        'title': tuple_data[0],
+        'borrow_date': tuple_data[1],
+        'due_date': tuple_data[2],
+        'return_date': tuple_data[3],
+        'book_id': tuple_data[4]
+    }
 
 def search_available_books(query=None):
     conn = get_db_connection()
@@ -11,14 +28,17 @@ def search_available_books(query=None):
         search_term = f"%{query}%"
         cursor.execute("""
             SELECT id, title, author, category FROM books 
-            WHERE status = 'available' AND (title LIKE %s OR author LIKE %s)
+            WHERE status = 'available' AND (title ILIKE %s OR author ILIKE %s)
         """, (search_term, search_term))
     else:
         cursor.execute("SELECT id, title, author, category FROM books WHERE status = 'available'")
         
-    books = cursor.fetchall()
+    books_tuples = cursor.fetchall()
     cursor.close()
     conn.close()
+    
+    # Convert tuples to dictionaries
+    books = [tuple_to_book_dict(book) for book in books_tuples]
     return books
 
 def borrow_book(user_id, username, book_id, days_to_borrow):
@@ -80,7 +100,10 @@ def view_borrowing_history(user_id):
         WHERE t.user_id = %s
         ORDER BY t.borrow_date DESC
     """, (user_id,))
-    history = cursor.fetchall()
+    history_tuples = cursor.fetchall()
     cursor.close()
     conn.close()
+    
+    # Convert tuples to dictionaries
+    history = [tuple_to_history_dict(item) for item in history_tuples]
     return history

@@ -2,6 +2,26 @@
 
 from database import get_db_connection
 
+def tuple_to_book_dict(tuple_data):
+    """Convert book tuple to dictionary for templates"""
+    return {
+        'id': tuple_data[0],
+        'title': tuple_data[1],
+        'author': tuple_data[2],
+        'category': tuple_data[3],
+        'status': tuple_data[4]
+    }
+
+def tuple_to_transaction_dict(tuple_data):
+    """Convert transaction tuple to dictionary for templates"""
+    return {
+        'username': tuple_data[0],
+        'title': tuple_data[1],
+        'borrow_date': tuple_data[2],
+        'due_date': tuple_data[3],
+        'return_date': tuple_data[4]
+    }
+
 def add_book(title, author, category):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -14,9 +34,12 @@ def view_all_books():
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id, title, author, category, status FROM books")
-    books = cursor.fetchall()
+    books_tuples = cursor.fetchall()
     cursor.close()
     conn.close()
+    
+    # Convert tuples to dictionaries
+    books = [tuple_to_book_dict(book) for book in books_tuples]
     return books
 
 def update_book_field(book_id, field_to_update, new_value):
@@ -63,9 +86,12 @@ def view_all_borrowing_records():
         JOIN books b ON t.book_id = b.id
         ORDER BY t.borrow_date DESC
     """)
-    records = cursor.fetchall()
+    records_tuples = cursor.fetchall()
     cursor.close()
     conn.close()
+    
+    # Convert tuples to dictionaries
+    records = [tuple_to_transaction_dict(record) for record in records_tuples]
     return records
     
 def create_user(username, password, role):

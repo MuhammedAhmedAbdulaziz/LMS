@@ -20,3 +20,5 @@ EXPOSE 5000
 # Command to run the Flask application
 # The "--host=0.0.0.0" is crucial to make the server accessible from outside the container
 CMD ["flask", "run", "--host=0.0.0.0"]
+# Alternatively, if using app.py as the main entry point:
+#CMD ["python", "app.py"]
