@@ -75,11 +75,31 @@
                     {% for item in history %}
                     <tr>
                         <td>{{ item.title }}</td>
-                        <td>{{ item.borrow_date.split(' ')[0] }}</td>
-                        <td>{{ item.due_date.split(' ')[0] }}</td>
+                        <td>
+                            {% if item.borrow_date is string %}
+                                {{ item.borrow_date.split(' ')[0] }}
+                            {% elif item.borrow_date %}
+                                {{ item.borrow_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.due_date is string %}
+                                {{ item.due_date.split(' ')[0] }}
+                            {% elif item.due_date %}
+                                {{ item.due_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                
+                            {% endif %}
+                        </td>
                         <td>
                             {% if item.return_date %}
-                                <span class="status-returned">Returned on {{ item.return_date.split(' ')[0] }}</span>
+                                {% if item.return_date is string %}
+                                    <span class="status-returned">Returned on {{ item.return_date.split(' ')[0] }}</span>
+                                {% else %}
+                                    <span class="status-returned">Returned on {{ item.return_date.strftime('%Y-%m-%d') }}</span>
+                                {% endif %}
                             {% else %}
                                 <span class="status-borrowed">Borrowed</span>
                             {% endif %}

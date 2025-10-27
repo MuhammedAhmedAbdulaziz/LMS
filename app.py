@@ -9,6 +9,40 @@ import time
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key_for_dev'
 
+# Ensure DB tables exist when the app module is imported (covers `flask run` and `python app.py`).
+# This runs once at startup unless SKIP_DB_INIT is set.
+import os
+import time
+
+# At startup try to create DB tables, retrying until Postgres is available.
+# If SKIP_DB_INIT is set, skip this step (useful for tests or manual migrations).
+def ensure_db_init():
+    if os.getenv('SKIP_DB_INIT'):
+        print("↩️ SKIP_DB_INIT set — skipping DB initialization")
+        return
+
+    max_retries = int(os.getenv('MAX_DB_INIT_RETRIES', '12'))
+    delay = int(os.getenv('DB_INIT_RETRY_DELAY', '5'))
+
+    print(f"🗃️ Ensuring DB tables exist (will retry up to {max_retries} times)...")
+    attempt = 0
+    while attempt < max_retries:
+        attempt += 1
+        try:
+            database.create_tables()
+            print("🟢 DB tables ensured")
+            return
+        except Exception as e:
+            print(f"⚠️ DB init attempt {attempt}/{max_retries} failed: {e}")
+            if attempt >= max_retries:
+                print("❌ Exhausted DB init retries — exiting to let Kubernetes restart the pod")
+                # Exit with non-zero so the pod is marked failed and can be restarted
+                raise
+            time.sleep(delay)
+
+# Run DB init at import time so it runs under both `flask run` and `python app.py`.
+ensure_db_init()
+
 # --- DECORATORS ---
 def login_required(f):
     @wraps(f)

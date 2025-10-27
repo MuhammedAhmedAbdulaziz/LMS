@@ -1,28 +1,15 @@
 # admin_operations.py
 
+import os
+import gzip
+import shutil
+import psycopg2
+import hashlib
 from database import get_db_connection
-
-def tuple_to_book_dict(tuple_data):
-    """Convert book tuple to dictionary for templates"""
-    return {
-        'id': tuple_data[0],
-        'title': tuple_data[1],
-        'author': tuple_data[2],
-        'category': tuple_data[3],
-        'status': tuple_data[4]
-    }
-
-def tuple_to_transaction_dict(tuple_data):
-    """Convert transaction tuple to dictionary for templates"""
-    return {
-        'username': tuple_data[0],
-        'title': tuple_data[1],
-        'borrow_date': tuple_data[2],
-        'due_date': tuple_data[3],
-        'return_date': tuple_data[4]
-    }
+from datetime import datetime
 
 def add_book(title, author, category):
+    """Adds a new book to the database."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO books (title, author, category) VALUES (%s, %s, %s)", (title, author, category))
@@ -31,24 +18,35 @@ def add_book(title, author, category):
     conn.close()
 
 def view_all_books():
+    """Displays all books in the system."""
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cursor.execute("SELECT id, title, author, category, status FROM books")
-    books_tuples = cursor.fetchall()
+    books = cursor.fetchall()
     cursor.close()
     conn.close()
-    
-    # Convert tuples to dictionaries
-    books = [tuple_to_book_dict(book) for book in books_tuples]
     return books
 
+def get_book_details(book_id):
+    """Retrieves the details for a single book by its ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor.execute("SELECT id, title, author, category FROM books WHERE id = %s", (book_id,))
+    book = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return book
+
 def update_book_field(book_id, field_to_update, new_value):
+    """Updates a single field of a book's details. Returns True on success, False on failure."""
     allowed_fields = ['title', 'author', 'category']
     if field_to_update not in allowed_fields:
+        print("Error: Invalid field specified for update.")
         return False
 
     conn = get_db_connection()
     cursor = conn.cursor()
+    # Use an f-string safely as the field is validated against a whitelist
     query = f"UPDATE books SET {field_to_update} = %s WHERE id = %s"
     cursor.execute(query, (new_value, book_id))
     
@@ -63,6 +61,7 @@ def update_book_field(book_id, field_to_update, new_value):
     return True
 
 def delete_book(book_id):
+    """Deletes a book from the database. Returns True on success, False on failure."""
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM books WHERE id = %s", (book_id,))
@@ -78,38 +77,71 @@ def delete_book(book_id):
     return True
 
 def view_all_borrowing_records():
+    """Displays all borrowing and returning activities, including due date."""
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cursor.execute("""
         SELECT t.username, b.title, t.borrow_date, t.due_date, t.return_date
         FROM transactions t
         JOIN books b ON t.book_id = b.id
         ORDER BY t.borrow_date DESC
     """)
-    records_tuples = cursor.fetchall()
+    records = cursor.fetchall()
     cursor.close()
     conn.close()
-    
-    # Convert tuples to dictionaries
-    records = [tuple_to_transaction_dict(record) for record in records_tuples]
     return records
     
 def create_user(username, password, role):
+    """Creates a new user or admin with a hashed password, callable only by an admin."""
     if role not in ['user', 'admin']:
+        print("Error: Invalid role specified. Must be 'user' or 'admin'.")
         return False
-        
-    import hashlib
     password_hash = hashlib.sha256(password.encode()).hexdigest()
-    
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)",
                        (username, password_hash, role))
         conn.commit()
-        return True
-    except:
+    except psycopg2.IntegrityError:
+        print("Error: This username is already taken.")
+        conn.rollback()
         return False
     finally:
         cursor.close()
         conn.close()
+    return True
+
+def disk_usage_alert_system():
+    """Scans for large files, compresses them, and logs the event."""
+    # (No changes to this function as it's file-system based)
+    alerts = []
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+    for filename in os.listdir(current_directory):
+        filepath = os.path.join(current_directory, filename)
+        if os.path.isfile(filepath):
+            file_size_gb = os.path.getsize(filepath) / (1024 * 1024 * 1024)
+            if file_size_gb >= 1:
+                try:
+                    with open(filepath, 'rb') as f_in, gzip.open(f'{filepath}.gz', 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                    os.remove(filepath)
+                    log_message = f"Compressed {filename} due to large size ({file_size_gb:.2f} GB)."
+                    alerts.append(log_message)
+                    log_action("System Alert", log_message)
+                except Exception as e:
+                    error_message = f"Error compressing {filename}: {e}"
+                    alerts.append(error_message)
+                    log_action("System Error", error_message)
+    return alerts
+
+def log_action(action, details):
+    """Logs an action to the logs table."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    cursor.execute("INSERT INTO logs (timestamp, action, details) VALUES (%s, %s, %s)",
+                   (timestamp, action, details))
+    conn.commit()
+    cursor.close()
+    conn.close()

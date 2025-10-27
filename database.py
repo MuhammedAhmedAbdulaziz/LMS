@@ -1,25 +1,34 @@
+# database.py
+
 import psycopg2
+import psycopg2.extras
 import hashlib
-import os
-from config import DATABASE_URL
+from config import DB_NAME, DB_USER, DB_PASS, DB_HOST, DB_PORT
 
 def get_db_connection():
     """Establishes a connection to the PostgreSQL database."""
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(
+        dbname=DB_NAME,
+        user=DB_USER,
+        password=DB_PASS,
+        host=DB_HOST,
+        port=DB_PORT
+    )
     return conn
 
 def create_tables():
     """Creates the necessary tables in the database if they don't exist."""
     conn = get_db_connection()
-    cursor = conn.cursor()
+    # Use DictCursor to access columns by name
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # Create users table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            role VARCHAR(20) NOT NULL CHECK(role IN ('user', 'admin'))
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL CHECK(role IN ('user', 'admin'))
         );
     ''')
 
@@ -27,10 +36,10 @@ def create_tables():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS books (
             id SERIAL PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            author VARCHAR(255) NOT NULL,
-            category VARCHAR(100),
-            status VARCHAR(20) NOT NULL DEFAULT 'available' CHECK(status IN ('available', 'borrowed'))
+            title TEXT NOT NULL,
+            author TEXT NOT NULL,
+            category TEXT,
+            status TEXT NOT NULL DEFAULT 'available' CHECK(status IN ('available', 'borrowed'))
         );
     ''')
 
@@ -38,12 +47,24 @@ def create_tables():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS transactions (
             id SERIAL PRIMARY KEY,
-            user_id INTEGER NOT NULL REFERENCES users(id),
-            username VARCHAR(255) NOT NULL,
-            book_id INTEGER NOT NULL REFERENCES books(id),
-            borrow_date TIMESTAMP NOT NULL,
-            due_date TIMESTAMP NOT NULL,
-            return_date TIMESTAMP
+            user_id INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            book_id INTEGER NOT NULL,
+            borrow_date TEXT NOT NULL,
+            due_date TEXT NOT NULL,
+            return_date TEXT,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (book_id) REFERENCES books (id)
+        );
+    ''')
+
+    # Create logs table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS logs (
+            id SERIAL PRIMARY KEY,
+            timestamp TEXT NOT NULL,
+            action TEXT NOT NULL,
+            details TEXT
         );
     ''')
 
@@ -60,4 +81,4 @@ def create_tables():
 
 if __name__ == '__main__':
     create_tables()
-    print("Database and tables created successfully.")
+    print("Database and tables created successfully for PostgreSQL.")

@@ -40,11 +40,10 @@ metadata:
   name: flask-app-service
   namespace: library-app
 spec:
-  type: NodePort # Exposes the service on each Node's IP at a static port
+  type: ClusterIP 
   selector:
     app: flask-app
   ports:
     - protocol: TCP
       port: 80 # The port on the service
       targetPort: 5000 # The port on the pod
-      nodePort: 30088 # The port on each node to expose

@@ -96,9 +96,35 @@
                     <tr>
                         <td>{{ t.username }}</td>
                         <td>{{ t.title }}</td>
-                        <td>{{ t.borrow_date.split(' ')[0] }}</td>
-                        <td>{{ t.due_date.split(' ')[0] }}</td>
-                        <td>{{ t.return_date.split(' ')[0] if t.return_date else 'Not Returned' }}</td>
+                        <td>
+                            {% if t.borrow_date is string %}
+                                {{ t.borrow_date.split(' ')[0] }}
+                            {% elif t.borrow_date %}
+                                {{ t.borrow_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if t.due_date is string %}
+                                {{ t.due_date.split(' ')[0] }}
+                            {% elif t.due_date %}
+                                {{ t.due_date.strftime('%Y-%m-%d') }}
+                            {% else %}
+                                
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if t.return_date %}
+                                {% if t.return_date is string %}
+                                    {{ t.return_date.split(' ')[0] }}
+                                {% else %}
+                                    {{ t.return_date.strftime('%Y-%m-%d') }}
+                                {% endif %}
+                            {% else %}
+                                Not Returned
+                            {% endif %}
+                        </td>
                     </tr>
                     {% else %}
                     <tr><td colspan="5">No transactions found.</td></tr>
