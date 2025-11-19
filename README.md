@@ -141,27 +141,22 @@ EKS requires several core add-ons to operate correctly. For production clusters 
 * **CoreDNS** – Cluster DNS service
 * **kube-proxy** – Handles Kubernetes Service networking
 
-### ⭐ Recommended Add-ons (must be installed manually)
+### **Required Manual Add-ons**
 
-Installing these early prevents storage, runtime, and monitoring issues.
+### **1️⃣ Amazon EKS Pod Identity Agent — Required**
+Used for mapping IAM roles → Kubernetes pods. Required for EBS CSI Driver.
 
-#### 1. **Amazon EBS CSI Driver** (Required for Postgres)
+**Your cluster:** ✔ Active
 
-Enables dynamic provisioning of EBS volumes used by PostgreSQL StatefulSet.
+---
 
-* Navigate to: *EKS Console → LMS-cluster → Add-ons → Add add-on*
-* Choose: **Amazon EBS CSI Driver**
-* Access type: **EKS Pod Identity**
-* Create recommended IAM Role
+### **2️⃣ Amazon EBS CSI Driver — Required**
+Enables dynamic provisioning of EBS volumes (used by PostgreSQL StatefulSet).
 
-Without this add-on, your `PersistentVolumeClaim` stays **Pending**, and PostgreSQL will never start.
+- Access Type: **EKS Pod Identity**
+- IAM Role: `AmazonEKSPodIdentityAmazonEBSCSIDriverRole`
 
-#### 2. **Amazon GuardDuty EKS Runtime Monitoring** (Recommended for security)
-
-Adds runtime threat detection inside worker nodes.
-
-* Requires GuardDuty enabled in your AWS account
-* Access type: **EKS Pod Identity**
+**Your cluster:** ✔ Active
 
 Installing this early ensures complete cluster observability and runtime protection.
 
