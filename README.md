@@ -1,4 +1,4 @@
-# AWS EKS Demo (Terraform)
+# AWS EKS  (Terraform)
 
 A compact, opinionated Terraform project that provisions a VPC and a small Amazon EKS cluster for learning and demonstration purposes.
 
