@@ -71,7 +71,7 @@ resource "aws_iam_role" "ebs_csi_role" {
       Effect = "Allow",
       Action = "sts:AssumeRole",
       Principal = {
-        Service = "eks-pods.eks.amazonaws.com"
+        Service = "eks-pods.amazonaws.com"
       }
     }]
   })
