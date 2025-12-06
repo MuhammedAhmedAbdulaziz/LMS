@@ -69,9 +69,15 @@ resource "aws_iam_role" "ebs_csi_role" {
     Version = "2012-10-17",
     Statement = [{
       Effect = "Allow",
-      Action = "sts:AssumeRole",
+      # -----------------------------------------------------------
+      # CHANGE: Must include "sts:TagSession" for EKS Pod Identity
+      # -----------------------------------------------------------
+      Action = [
+        "sts:AssumeRole",
+        "sts:TagSession"
+      ],
       Principal = {
-        Service = "ec2.amazonaws.com"
+        Service = "pods.eks.amazonaws.com"
       }
     }]
   })

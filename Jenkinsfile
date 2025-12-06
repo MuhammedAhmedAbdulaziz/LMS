@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
-        AWS_DEFAULT_REGION = "eu-west-1"
+        AWS_DEFAULT_REGION = "eu-west-1"        
+        CLUSTER_NAME = 'azoz-eks'
+
     }
 
     stages {
@@ -38,6 +40,15 @@ pipeline {
                 withAWS(credentials: 'aws-credi', region: 'eu-west-1') {
                     sh "terraform apply -auto-approve tfplan"
                 }
+            }
+        }
+
+        stage('Configure kubectl') {
+            steps {
+                sh '''
+                aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_DEFAULT_REGION}
+                kubectl get nodes
+                '''
             }
         }
     }
