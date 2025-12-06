@@ -43,14 +43,7 @@ pipeline {
             }
         }
 
-        stage('Configure kubectl') {
-            steps {
-                sh '''
-                aws eks update-kubeconfig --name ${CLUSTER_NAME} --region ${AWS_DEFAULT_REGION}
-                kubectl get nodes
-                '''
-            }
-        }
+       
     }
 
     post {
