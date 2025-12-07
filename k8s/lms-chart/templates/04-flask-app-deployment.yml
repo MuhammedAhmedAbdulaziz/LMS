@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-app-deployment
+  namespace: library-app
+spec:
+  replicas: 1 # Run 1 pods for our application
+  selector:
+    matchLabels:
+      app: flask-app
+  template:
+    metadata:
+      labels:
+        app: flask-app
+    spec:
+      containers:
+        - name: flask-app
+          # IMPORTANT: Use the image you pushed to Docker Hub
+          image: azoooz/library-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            # The DB_HOST is the name of the postgres service we created
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_NAME
+              value: "library"
+            - name: DB_USER
+              value: "user"
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-app-service
+  namespace: library-app
+spec:
+  type: LoadBalancer 
+  selector:
+    app: flask-app
+  ports:
+    - port: 80 # The port on the service
+      targetPort: 5000 # The port on the pod

@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lms-ingress
+  namespace: library-app
+  annotations:
+    # This annotation is important for the NGINX Ingress controller
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  # This tells Kubernetes which Ingress Controller should handle this Ingress.
+  # "nginx" is the class provided by the Minikube addon.
+  ingressClassName: nginx
+  rules:
+  - host: lms.com  # Our desired hostname
+    http:
+      paths:
+      - path: /  # Route all traffic from the root path
+        pathType: Prefix
+        backend:
+          service:
+            # This must match the name of our Flask service
+            name: flask-app-service
+            port:
+              # This must match the 'port' defined in our service
+              number: 80
