@@ -65,7 +65,7 @@ graph TD
     EBS[(AWS EBS Volume)]:::aws
 
     %% Connections / Data Flow
-    User ==>|HTTPS| LB
+    User ==>|HTTP| LB
     LB ==>|Traffic Routing| K8sSvc
     K8sSvc -->|Load Balancing| Pod1
     K8sSvc -->|Load Balancing| Pod2
