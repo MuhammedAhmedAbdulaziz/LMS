@@ -1,6 +1,6 @@
-#----------------------------------------
-# Jenkins Pipeline for CI/CD of Library App
-#----------------------------------------   
+//----------------------------------------
+// Jenkins Pipeline for CI/CD of Library App
+//----------------------------------------   
 pipeline {
     agent any
 
