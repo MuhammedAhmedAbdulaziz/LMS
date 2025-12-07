@@ -1,5 +1,3 @@
-update my code and back it to me in copy paste formate
-
 # 📚 Cloud-Native Library Management System (LMS)
 ### *From Monolith to Microservices-Ready Architecture on AWS EKS*
 
@@ -43,17 +41,17 @@ graph TD
     LB[AWS Load Balancer]:::aws
     
     %% Infrastructure Layer
-    subgraph EKS_Cluster [AWS EKS Cluster (eu-west-1)]
+    subgraph EKS_Cluster ["AWS EKS Cluster (eu-west-1)"]
         direction TB
         style EKS_Cluster fill:#f5f7fa,stroke:#666,stroke-dasharray: 5 5
 
         %% Kubernetes Logic Layer
-        subgraph K8s_NS [Namespace: library-app]
+        subgraph K8s_NS ["Namespace: library-app"]
             style K8s_NS fill:#fff,stroke:#326ce5,stroke-width:2px
             
             K8sSvc(K8s Service <br> LoadBalancer Type):::k8s
             
-            subgraph Replicas [Flask Deployment]
+            subgraph Replicas ["Flask Deployment"]
                 style Replicas fill:#fff,stroke:#999,stroke-dasharray: 5 5
                 Pod1[Flask Pod A]:::pod
                 Pod2[Flask Pod B]:::pod
@@ -137,13 +135,52 @@ LMS/
 
 ---
 
-## ☁️ Infrastructure as Code (Terraform)
+## ☁️ AWS Infrastructure Deep Dive & Skills Acquired
 
-We utilize Terraform to eliminate "ClickOps." The infrastructure is modular, scalable, and secure.
+This project moves beyond simple "ClickOps" by implementing a production-grade **Infrastructure as Code (IaC)** strategy using Terraform. The architecture is designed for security, scalability, and persistence.
 
-### 🔌 Modules
-*   **VPC Module:** Provisions a custom VPC, Public/Private Subnets, NAT Gateways, and Route Tables.
-*   **EKS Module:** Deploys the Control Plane, Worker Node Groups, and IAM OIDC Providers.
+### 1. Advanced Networking (VPC Design)
+*   **Tiered Subnet Architecture:** Implemented a custom VPC (`10.0.0.0/16`) with strict isolation between **Public** and **Private** subnets.
+*   **NAT Gateway Strategy:** Configured NAT Gateways with Elastic IPs (EIPs) in public subnets to allow private worker nodes to access the internet (e.g., for container pulls) without exposing them to inbound traffic.
+*   **Multi-AZ High Availability:** Resources are distributed across `eu-west-1a` and `eu-west-1b` to ensure resilience against data center failures.
+
+### 2. Compute & Orchestration (EKS)
+*   **Managed Control Plane:** Deployed AWS EKS v1.30 with public API access (restricted via IAM).
+*   **Managed Node Groups:** Utilizes **AWS Auto Scaling Groups (ASG)** to manage EC2 worker nodes (`t3.small`).
+*   **Capacity Planning:** Configured scaling constraints (`min: 1`, `max: 2`, `desired: 2`) to optimize cost vs. availability.
+
+### 3. Modern Identity & Security (IAM & Pod Identity)
+*   **EKS Pod Identity Agent:** Implemented the modern **AWS EKS Pod Identity** standard (replacing legacy OIDC/IRSA) to map AWS IAM Roles directly to Kubernetes Service Accounts.
+*   **Least Privilege IAM Policies:** Created granular IAM roles for the Cluster, Worker Nodes, and Add-ons.
+*   **Trust Policy Engineering:** Solved complex permission issues by correctly configuring the `sts:TagSession` and `sts:AssumeRole` actions for the Pod Identity principal (`pods.eks.amazonaws.com`).
+
+```hcl
+# Terraform Snippet: Configuring Modern Pod Identity Trust Policy
+assume_role_policy = jsonencode({
+  Version = "2012-10-17",
+  Statement = [{
+    Effect = "Allow",
+    Action = [
+      "sts:AssumeRole",
+      "sts:TagSession" # Crucial for EKS Pod Identity context
+    ],
+    Principal = {
+      Service = "pods.eks.amazonaws.com"
+    }
+  }]
+})
+```
+
+### 4. Stateful Storage Management
+*   **EBS CSI Driver:** integrated the `aws-ebs-csi-driver` add-on to enable **Dynamic Volume Provisioning**.
+*   **Persistence:** Enables the Postgres StatefulSet to automatically request and bind **AWS EBS gp3 volumes**, ensuring database data survives pod restarts or node failures.
+
+### 5. Cluster Operations & Add-ons
+Automated the lifecycle management of critical Kubernetes operational components via Terraform:
+*   **VPC CNI:** For native AWS networking within Pods.
+*   **CoreDNS:** For internal service discovery.
+*   **Kube-Proxy:** For network rule enforcement.
+```
 
 ### 🚀 Deployment
 ```bash
