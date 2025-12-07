@@ -1,10 +1,3 @@
-Here is a highly polished, professional, and visually engaging version of your README. I have structured it to highlight your DevOps skills (IaC, Orchestration, CI/CD) while keeping the application logic clear.
-
-You can copy the raw Markdown below and paste it into your `README.md`.
-
-***
-
-```markdown
 # 📚 Cloud-Native Library Management System (LMS)
 ### *From Monolith to Microservices-Ready Architecture on AWS EKS*
 
@@ -191,4 +184,3 @@ If you wish to test the application logic without deploying to AWS:
 *DevOps Engineer | Cloud Enthusiast*
 
 ---
-```
