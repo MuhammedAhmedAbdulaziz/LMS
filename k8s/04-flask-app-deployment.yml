@@ -4,7 +4,7 @@ metadata:
   name: flask-app-deployment
   namespace: library-app
 spec:
-  replicas: 2 # Run 2 pods for our application
+  replicas: 1 # Run 1 pods for our application
   selector:
     matchLabels:
       app: flask-app
@@ -40,10 +40,9 @@ metadata:
   name: flask-app-service
   namespace: library-app
 spec:
-  type: ClusterIP 
+  type: LoadBalancer 
   selector:
     app: flask-app
   ports:
-    - protocol: TCP
-      port: 80 # The port on the service
+    - port: 80 # The port on the service
       targetPort: 5000 # The port on the pod

@@ -1,172 +1,153 @@
-# Library Management System (LMS)
+# AWS EKS  (Terraform)
 
-A full-stack Library Management System built with Flask and PostgreSQL, designed to be deployed as a containerized application on Kubernetes. This project serves as a practical example of applying DevOps principles, including containerization, orchestration, and configuration management.
+A compact, opinionated Terraform project that provisions a VPC and a small Amazon EKS cluster for learning and demonstration purposes.
 
+This repository contains a root Terraform configuration that composes two local modules:
 
-## ✨ Features
+- `modules/vpc` — creates the VPC, subnets (public/private), NAT gateways, and routing.
+- `modules/eks` — creates an EKS cluster and a managed node group.
 
-The application provides a complete set of features for both library users and administrators.
+This README documents the project layout, inputs/outputs, recommended workflow, verification steps, and troubleshooting notes.
 
-### User Features
-- **Authentication:** Secure user signup and login.
-- **Book Search:** Search the library catalog for available books by title or author.
-- **Borrow Books:** Borrow available books for a specified number of days.
-- **Return Books:** Return currently borrowed books.
-- **Borrowing History:** View a complete history of all borrowed and returned books.
+## Quick facts / contract
 
-### Admin Features
-- **Full Book Management (CRUD):**
-  - **Add:** Add new books to the library catalog.
-  - **Update:** Modify the details (title, author, category) of existing books.
-  - **Delete:** Remove books from the system.
-- **View All Books:** See a complete list of all books and their current status (available/borrowed).
-- **User Management:** Create new user or admin accounts.
-- **Transaction Monitoring:** View a global log of all borrowing and return activities across all users.
+- Inputs: Terraform variables (see `variables.tf` and `terraform.tfvars`) — primary inputs are `aws_region` and `cluster_name`.
+- Outputs: VPC ID, subnet IDs, and EKS cluster endpoint/name via the root `outputs.tf`.
+- Success criteria: `terraform apply` completes without API errors and an EKS control plane and node group appear in the AWS Console.
+- Error modes: AWS credentials/permissions, exhausted IP address space, insufficient EC2 quotas, or conflicting resources in the target account/region.
 
-## 💻 Tech Stack
+## Files & structure
 
-- **Backend:** Python 3.9, Flask
-- **WSGI Server:** Gunicorn
-- **Database:** PostgreSQL
-- **Containerization:** Docker & Docker Compose (for local development)
-- **Orchestration:** Kubernetes (deployment on Minikube)
-- **Frontend:** HTML, CSS, Vanilla JavaScript
+Root files:
 
-## 🚀 Getting Started
+- `main.tf` — root module wiring `modules/vpc` and `modules/eks` together.
+- `providers.tf` — provider configuration; default region is `eu-west-1` and is overridable by `terraform.tfvars` or environment variables.
+- `variables.tf` — root-level variables used by the root module.
+- `terraform.tfvars` — example values used for local development (region and cluster name).
+- `outputs.tf` — root-level outputs, re-exposing module outputs like `vpc_id` and `eks_cluster_endpoint`.
+- `terraform.tfstate` / `.backup` — local state files (if present). Avoid committing sensitive state to public repos.
 
-There are two ways to run this application: locally using Docker Compose for development and testing, or deployed on a Kubernetes cluster (Minikube) for a production-like environment.
+Modules:
 
-### Default Admin Credentials
+- `modules/vpc` — responsible for VPC creation and subnets. Exposes `vpc_id`, `public_subnet_ids`, and `private_subnet_ids`.
+- `modules/eks` — EKS cluster + managed node group. Important variables: `cluster_name`, `vpc_id`, `subnet_ids`, and node group sizing (`desired_size`, `min_size`, `max_size`).
 
-A default administrator account is created when the database is first initialized. Use these credentials to log in for the first time:
+Provider versions:
 
-- **Username:** `admin`
-- **Password:** `admin123`
+- This project uses the AWS provider pinned (in the workspace) to `~> 5.0` (see `.terraform.lock.hcl`).
 
-### 1. Local Development (with Docker Compose)
+## Variables (high-level)
 
-This is the recommended method for local development and testing.
+The module-level defaults are tuned for a small learning cluster:
 
-**Prerequisites:**
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/) 
+- `cluster_name` — default `azoz-eks` (root and module default). Change via `terraform.tfvars` or CLI.
+- `aws_region` — default `eu-west-1` in `terraform.tfvars`.
+- Node sizing: `node_instance_type` default `t3.small` and default node counts are small (1–2 nodes). These are intentionally conservative for demos.
 
-**Steps:**
+See `modules/eks/variables.tf` and `variables.tf` for the full list and types.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone -b migrate-to-postgres --single-branch https://github.com/MuhammedAhmedAbdulaziz/LMS.git 
-    cd LMS
-    ```
+## Prerequisites
 
-2.  **Build and run the application:**
-    This single command will build the Flask application image, pull the PostgreSQL image, and start both containers in a networked environment.
-    ```bash
-    docker-compose up --build
-    ```
+- Terraform >= 1.4.0 (project indicates required_version). Install from https://www.terraform.io.
+- AWS CLI (optional but useful for kubeconfig integration): https://aws.amazon.com/cli/
+- An AWS account and credentials configured locally. The terraform AWS provider will honor the usual environment variables, `~/.aws/credentials`, or other supported auth methods.
+- Sufficient AWS quotas (EC2 instances, EIP, NAT gateways, EKS cluster limits) in the chosen region.
 
-3.  **Access the application:**
-    Open your web browser and navigate to **`http://localhost:5000`**. The application should be fully functional.
+Important security note: this project stores state locally by default. For multi-user or production scenarios, use a remote backend (S3 + DynamoDB) and avoid committing state files.
 
-4.  **Stopping the application:**
-    To stop the services, press `CTRL+C` in the terminal. To clean up the containers and the network, run:
-    ```bash
-    docker-compose down
-    ```
-    To perform a full cleanup, including the database volume (all data will be lost), run:
-    ```bash
-    docker-compose down -v
-    ```
+## Typical workflow
 
-### 2. Deployment on Kubernetes (with Minikube)
+1. Inspect variables and adjust as needed:
 
-This section guides you through deploying the application to a local Kubernetes cluster.
+   - Edit `terraform.tfvars` or create an override file, e.g. `production.tfvars`.
 
-**Prerequisites:**
-- [Docker](https://www.docker.com/get-started)
-- [Minikube](https://minikube.sigs.k8s.io/docs/start/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
-- A Docker Hub account to push your application image.
+2. Initialize the working directory:
 
-**Steps:**
+   terraform init
 
-1.  **Build and Push the Docker Image:**
-    The Kubernetes cluster needs to pull your application image from a container registry.
-    ```bash
-    # 1. Log in to your Docker Hub account
-    docker login
+3. Validate & format (optional but recommended):
 
-    # 2. Build and tag your image (replace 'your-dockerhub-username')
-    docker build -t your-dockerhub-username/library-app:latest .
+   terraform fmt -recursive
+   terraform validate
 
-    # 3. Push the image to Docker Hub
-    docker push your-dockerhub-username/library-app:latest
-    ```
+4. Create an execution plan:
 
-2.  **Update the Kubernetes Manifest:**
-    Open the file `k8s/04-flask-app-deployment.yml` and change the `image` field to the one you just pushed:
-    ```yaml
-    # ... inside k8s/04-flask-app-deployment.yml
-    spec:
-      containers:
-        - name: flask-app
-          # IMPORTANT: Update this line
-          image: your-dockerhub-username/library-app:latest
-    ```
+   terraform plan -out=plan.tfplan
 
-3.  **Start Minikube:**
-    ```bash
-    minikube start
-    ```
+5. Apply the plan:
 
-4.  **Apply the Kubernetes Manifests:**
-    This command will create the namespace, secret, database, and application resources in your Minikube cluster.
-    ```bash
-    kubectl apply -f k8s/
-    ```
+   terraform apply "plan.tfplan"
 
-5.  **Check the Deployment Status:**
-    Wait for all pods to be in the `Running` state.
-    ```bash
-    kubectl get all -n library-app
-    ```
+6. After apply, inspect outputs:
 
-6.  **Access the Application:**
-    Minikube provides a command to easily get the URL for your service.
-    ```bash
-    minikube service flask-app-service --url -n library-app
-    ```
-    This will print a URL. Open this URL in your browser to use the application.
+   terraform output
 
-7.  **Cleaning Up:**
-    To delete all the resources created on Minikube, simply delete the namespace:
-    ```bash
-    kubectl delete namespace library-app
-    ```
+   Example outputs provided by the root module include `vpc_id`, `public_subnet_ids`, `private_subnet_ids`, `eks_cluster_endpoint`, and `eks_cluster_name`.
 
-## 📂 Project Structure
-```
-.
-├── k8s/                  # Kubernetes manifest files
-├── screenshots/          # Application screenshots
-│   ├── admin_dashboard.png
-│   └── user_dashboard.png
-├── static/               # Static files (CSS)
-├── templates/            # HTML templates
-├── admin_operations.py   # Data logic for admin functions
-├── app.py                # Main Flask application file
-├── auth.py               # Authentication logic
-├── config.py             # Configuration (DB connection details)
-├── database.py           # Database connection and table creation
-├── user_operations.py    # Data logic for user functions
-├── Dockerfile            # Instructions to build the application image
-├── docker-compose.yml    # Defines services for local development
-├── requirements.txt      # Python dependencies
-└── README.md             
-```
+## Configure kubectl for the created EKS cluster
 
-## 📈 Future Improvements
-- [ ] Implement a CI/CD pipeline using GitHub Actions to automate testing and deployment.
-- [ ] Add database migrations using a tool like Alembic.
-- [ ] Enhance the frontend with a modern JavaScript framework like React or Vue.js.
-- [ ] Add more features like book reservations, fine calculations for overdue books, and user reviews.
+Once the cluster is created, get cluster credentials (AWS CLI must be configured):
+
+   aws eks --region <region> update-kubeconfig --name <cluster_name>
+
+Example using defaults in this repo:
+
+   aws eks --region eu-west-1 update-kubeconfig --name azoz-eks
+
+Verify nodes and cluster objects with `kubectl get nodes` and `kubectl get pods --all-namespaces`.
+
+## Teardown / destroy
+
+To remove everything this project created, run:
+
+   terraform destroy
+
+Be careful: this will delete the EKS cluster and all EC2 instances, NAT gateways, and associated resources. Expect EIP/NAT cleanup to take a few minutes due to AWS resource lifecycle.
+
+## Testing & verification checklist
+
+- Terraform init & plan succeed.
+- Terraform apply finishes with no AWS API errors.
+- `terraform output` shows the expected values for VPC and EKS resources.
+- `aws eks update-kubeconfig` produces a kubeconfig entry and `kubectl get nodes` shows worker nodes in Ready state.
+
+## Troubleshooting
+
+- AWS auth errors: ensure environment variables (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY), named profiles, or an EC2 role provide the necessary permissions.
+- Quota errors: check EC2 service quotas (instances, ENIs) and request increases if necessary.
+- VPC CIDR overlaps: if you already have a VPC in the account/region using the same CIDR ranges, create in a different region or adjust module configuration.
+- Long NAT gateway deletions: deleting NAT gateways and associated EIPs can sometimes take a few minutes; wait and re-run `terraform apply`/`destroy` if necessary.
+
+## Extending this project
+
+- Add a remote state backend (recommended: S3 + DynamoDB for locking).
+- Add module tests using `terraform validate` and `tflint` or `checkov`.
+- Add an IAM/OIDC provider and RBAC mappings if you want to manage cluster roles and service accounts.
+- Replace public subnet usage for nodes with private subnets and NAT gateway egress for production clusters.
+
+## Notes / Caveats
+
+- The example root module currently passes `module.vpc.public_subnet_ids` into the EKS module, which places both control-plane ENIs and nodes into the public subnets — this is intended for learning and convenience only and is not recommended for production workloads.
+- Keep the `terraform.tfvars` values and any secrets out of version control.
+
+## Useful commands reference
+
+- terraform init
+- terraform plan -out=plan.tfplan
+- terraform apply "plan.tfplan"
+- terraform output
+- terraform destroy
+- aws eks --region <region> update-kubeconfig --name <cluster_name>
+
+## License & contributions
+
+This repository is provided as-is for learning purposes. If you want to contribute, open a PR or file an issue describing the change.
+
+---
+
+If you'd like, I can also:
+
+- Add a minimal `README` badge/status or a `Makefile` with helpers for `init/plan/apply/destroy`.
+- Add a `backend.tf` example for S3 remote state (non-destructive).
+
+If you want any of that, tell me which option you prefer and I'll add it.

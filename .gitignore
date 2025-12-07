@@ -1,0 +1,15 @@
+cat <<EOF > .gitignore
+# Ignore Terraform State and Logs
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+
+# Ignore Python Cache
+__pycache__/
+*.pyc
+
+# Ignore OS files
+.DS_Store
+EOF
