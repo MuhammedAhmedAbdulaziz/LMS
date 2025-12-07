@@ -1,3 +1,5 @@
+update my code and back it to me in copy paste formate
+
 # 📚 Cloud-Native Library Management System (LMS)
 ### *From Monolith to Microservices-Ready Architecture on AWS EKS*
 
@@ -29,19 +31,51 @@ The architecture follows a decoupled pattern where infrastructure is managed sep
 
 ```mermaid
 graph TD
-    User((End User)) -->|HTTPS| ELB[AWS Load Balancer]
-    ELB -->|Traffic| K8sCluster[AWS EKS Cluster]
+    %% Styling Definitions
+    classDef user fill:#f9f9f9,stroke:#333,stroke-width:2px;
+    classDef aws fill:#FF9900,stroke:#232F3E,color:white,stroke-width:2px;
+    classDef k8s fill:#326ce5,stroke:#fff,color:white,stroke-width:2px;
+    classDef pod fill:#e8f0ff,stroke:#326ce5,stroke-width:2px,color:#333;
+    classDef db fill:#336791,stroke:#fff,color:white,stroke-width:2px;
+
+    %% External Access Layer
+    User((End User)):::user
+    LB[AWS Load Balancer]:::aws
     
-    subgraph "Kubernetes Namespace: library-app"
+    %% Infrastructure Layer
+    subgraph EKS_Cluster [AWS EKS Cluster (eu-west-1)]
         direction TB
-        Service[K8s Service] --> Pod1[Flask App Pod]
-        Service --> Pod2[Flask App Pod]
-        
-        Pod1 -->|Read/Write| DB[Postgres StatefulSet]
-        Pod2 -->|Read/Write| DB
+        style EKS_Cluster fill:#f5f7fa,stroke:#666,stroke-dasharray: 5 5
+
+        %% Kubernetes Logic Layer
+        subgraph K8s_NS [Namespace: library-app]
+            style K8s_NS fill:#fff,stroke:#326ce5,stroke-width:2px
+            
+            K8sSvc(K8s Service <br> LoadBalancer Type):::k8s
+            
+            subgraph Replicas [Flask Deployment]
+                style Replicas fill:#fff,stroke:#999,stroke-dasharray: 5 5
+                Pod1[Flask Pod A]:::pod
+                Pod2[Flask Pod B]:::pod
+            end
+            
+            Postgres[(PostgreSQL <br> StatefulSet)]:::db
+        end
     end
     
-    DB -->|Persist| EBS[(AWS EBS Volume)]
+    %% Storage Layer
+    EBS[(AWS EBS Volume)]:::aws
+
+    %% Connections / Data Flow
+    User ==>|HTTPS| LB
+    LB ==>|Traffic Routing| K8sSvc
+    K8sSvc -->|Load Balancing| Pod1
+    K8sSvc -->|Load Balancing| Pod2
+    
+    Pod1 -->|Read/Write| Postgres
+    Pod2 -->|Read/Write| Postgres
+    
+    Postgres ===|Persistent Storage| EBS
 ```
 
 ---
