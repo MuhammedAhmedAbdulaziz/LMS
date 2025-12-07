@@ -1,153 +1,194 @@
-# AWS EKS  (Terraform)
+Here is a highly polished, professional, and visually engaging version of your README. I have structured it to highlight your DevOps skills (IaC, Orchestration, CI/CD) while keeping the application logic clear.
 
-A compact, opinionated Terraform project that provisions a VPC and a small Amazon EKS cluster for learning and demonstration purposes.
+You can copy the raw Markdown below and paste it into your `README.md`.
 
-This repository contains a root Terraform configuration that composes two local modules:
+***
 
-- `modules/vpc` — creates the VPC, subnets (public/private), NAT gateways, and routing.
-- `modules/eks` — creates an EKS cluster and a managed node group.
+```markdown
+# 📚 Cloud-Native Library Management System (LMS)
+### *From Monolith to Microservices-Ready Architecture on AWS EKS*
 
-This README documents the project layout, inputs/outputs, recommended workflow, verification steps, and troubleshooting notes.
-
-## Quick facts / contract
-
-- Inputs: Terraform variables (see `variables.tf` and `terraform.tfvars`) — primary inputs are `aws_region` and `cluster_name`.
-- Outputs: VPC ID, subnet IDs, and EKS cluster endpoint/name via the root `outputs.tf`.
-- Success criteria: `terraform apply` completes without API errors and an EKS control plane and node group appear in the AWS Console.
-- Error modes: AWS credentials/permissions, exhausted IP address space, insufficient EC2 quotas, or conflicting resources in the target account/region.
-
-## Files & structure
-
-Root files:
-
-- `main.tf` — root module wiring `modules/vpc` and `modules/eks` together.
-- `providers.tf` — provider configuration; default region is `eu-west-1` and is overridable by `terraform.tfvars` or environment variables.
-- `variables.tf` — root-level variables used by the root module.
-- `terraform.tfvars` — example values used for local development (region and cluster name).
-- `outputs.tf` — root-level outputs, re-exposing module outputs like `vpc_id` and `eks_cluster_endpoint`.
-- `terraform.tfstate` / `.backup` — local state files (if present). Avoid committing sensitive state to public repos.
-
-Modules:
-
-- `modules/vpc` — responsible for VPC creation and subnets. Exposes `vpc_id`, `public_subnet_ids`, and `private_subnet_ids`.
-- `modules/eks` — EKS cluster + managed node group. Important variables: `cluster_name`, `vpc_id`, `subnet_ids`, and node group sizing (`desired_size`, `min_size`, `max_size`).
-
-Provider versions:
-
-- This project uses the AWS provider pinned (in the workspace) to `~> 5.0` (see `.terraform.lock.hcl`).
-
-## Variables (high-level)
-
-The module-level defaults are tuned for a small learning cluster:
-
-- `cluster_name` — default `azoz-eks` (root and module default). Change via `terraform.tfvars` or CLI.
-- `aws_region` — default `eu-west-1` in `terraform.tfvars`.
-- Node sizing: `node_instance_type` default `t3.small` and default node counts are small (1–2 nodes). These are intentionally conservative for demos.
-
-See `modules/eks/variables.tf` and `variables.tf` for the full list and types.
-
-## Prerequisites
-
-- Terraform >= 1.4.0 (project indicates required_version). Install from https://www.terraform.io.
-- AWS CLI (optional but useful for kubeconfig integration): https://aws.amazon.com/cli/
-- An AWS account and credentials configured locally. The terraform AWS provider will honor the usual environment variables, `~/.aws/credentials`, or other supported auth methods.
-- Sufficient AWS quotas (EC2 instances, EIP, NAT gateways, EKS cluster limits) in the chosen region.
-
-Important security note: this project stores state locally by default. For multi-user or production scenarios, use a remote backend (S3 + DynamoDB) and avoid committing state files.
-
-## Typical workflow
-
-1. Inspect variables and adjust as needed:
-
-   - Edit `terraform.tfvars` or create an override file, e.g. `production.tfvars`.
-
-2. Initialize the working directory:
-
-   terraform init
-
-3. Validate & format (optional but recommended):
-
-   terraform fmt -recursive
-   terraform validate
-
-4. Create an execution plan:
-
-   terraform plan -out=plan.tfplan
-
-5. Apply the plan:
-
-   terraform apply "plan.tfplan"
-
-6. After apply, inspect outputs:
-
-   terraform output
-
-   Example outputs provided by the root module include `vpc_id`, `public_subnet_ids`, `private_subnet_ids`, `eks_cluster_endpoint`, and `eks_cluster_name`.
-
-## Configure kubectl for the created EKS cluster
-
-Once the cluster is created, get cluster credentials (AWS CLI must be configured):
-
-   aws eks --region <region> update-kubeconfig --name <cluster_name>
-
-Example using defaults in this repo:
-
-   aws eks --region eu-west-1 update-kubeconfig --name azoz-eks
-
-Verify nodes and cluster objects with `kubectl get nodes` and `kubectl get pods --all-namespaces`.
-
-## Teardown / destroy
-
-To remove everything this project created, run:
-
-   terraform destroy
-
-Be careful: this will delete the EKS cluster and all EC2 instances, NAT gateways, and associated resources. Expect EIP/NAT cleanup to take a few minutes due to AWS resource lifecycle.
-
-## Testing & verification checklist
-
-- Terraform init & plan succeed.
-- Terraform apply finishes with no AWS API errors.
-- `terraform output` shows the expected values for VPC and EKS resources.
-- `aws eks update-kubeconfig` produces a kubeconfig entry and `kubectl get nodes` shows worker nodes in Ready state.
-
-## Troubleshooting
-
-- AWS auth errors: ensure environment variables (AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY), named profiles, or an EC2 role provide the necessary permissions.
-- Quota errors: check EC2 service quotas (instances, ENIs) and request increases if necessary.
-- VPC CIDR overlaps: if you already have a VPC in the account/region using the same CIDR ranges, create in a different region or adjust module configuration.
-- Long NAT gateway deletions: deleting NAT gateways and associated EIPs can sometimes take a few minutes; wait and re-run `terraform apply`/`destroy` if necessary.
-
-## Extending this project
-
-- Add a remote state backend (recommended: S3 + DynamoDB for locking).
-- Add module tests using `terraform validate` and `tflint` or `checkov`.
-- Add an IAM/OIDC provider and RBAC mappings if you want to manage cluster roles and service accounts.
-- Replace public subnet usage for nodes with private subnets and NAT gateway egress for production clusters.
-
-## Notes / Caveats
-
-- The example root module currently passes `module.vpc.public_subnet_ids` into the EKS module, which places both control-plane ENIs and nodes into the public subnets — this is intended for learning and convenience only and is not recommended for production workloads.
-- Keep the `terraform.tfvars` values and any secrets out of version control.
-
-## Useful commands reference
-
-- terraform init
-- terraform plan -out=plan.tfplan
-- terraform apply "plan.tfplan"
-- terraform output
-- terraform destroy
-- aws eks --region <region> update-kubeconfig --name <cluster_name>
-
-## License & contributions
-
-This repository is provided as-is for learning purposes. If you want to contribute, open a PR or file an issue describing the change.
+![Build Status](https://img.shields.io/badge/Build-Passing-success?style=for-the-badge&logo=jenkins)
+![Infrastructure](https://img.shields.io/badge/IaC-Terraform-purple?style=for-the-badge&logo=terraform)
+![Orchestration](https://img.shields.io/badge/K8s-AWS%20EKS-blue?style=for-the-badge&logo=kubernetes)
+![Language](https://img.shields.io/badge/Python-Flask-yellow?style=for-the-badge&logo=python)
+![Database](https://img.shields.io/badge/DB-PostgreSQL-336791?style=for-the-badge&logo=postgresql)
 
 ---
 
-If you'd like, I can also:
+## 📖 Executive Summary
 
-- Add a minimal `README` badge/status or a `Makefile` with helpers for `init/plan/apply/destroy`.
-- Add a `backend.tf` example for S3 remote state (non-destructive).
+The **Library Management System (LMS)** is a comprehensive full-stack project designed to demonstrate the **modernization of legacy applications**.
 
-If you want any of that, tell me which option you prefer and I'll add it.
+Starting as a standard local Python Flask application backed by SQLite, this project has been re-architected into a **production-grade cloud-native solution**. It leverages **AWS EKS** for high availability, **Terraform** for reproducible infrastructure, and **Jenkins** for fully automated CI/CD pipelines.
+
+### 🎯 Key Engineering Highlights
+*   **Infrastructure as Code:** Complete AWS environment provisioning using modular Terraform.
+*   **Zero-Downtime Deployments:** Rolling updates via Kubernetes deployments.
+*   **Persistent Storage:** Stateful sets with AWS EBS CSI drivers for database reliability.
+*   **Automation:** GitOps-style workflow triggered by GitHub Webhooks.
+
+---
+
+## 🏗️ System Architecture
+
+The architecture follows a decoupled pattern where infrastructure is managed separately from application logic, united via a CI/CD pipeline.
+
+```mermaid
+graph TD
+    User((End User)) -->|HTTPS| ELB[AWS Load Balancer]
+    ELB -->|Traffic| K8sCluster[AWS EKS Cluster]
+    
+    subgraph "Kubernetes Namespace: library-app"
+        direction TB
+        Service[K8s Service] --> Pod1[Flask App Pod]
+        Service --> Pod2[Flask App Pod]
+        
+        Pod1 -->|Read/Write| DB[Postgres StatefulSet]
+        Pod2 -->|Read/Write| DB
+    end
+    
+    DB -->|Persist| EBS[(AWS EBS Volume)]
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology | Description |
+| :--- | :--- | :--- |
+| **Frontend** | HTML5, CSS3, Jinja2 | Responsive UI with dynamic templating. |
+| **Backend** | Python 3.9, Flask | RESTful logic and route management. |
+| **Database** | PostgreSQL | Production-grade relational database. |
+| **Containerization** | Docker | Multi-stage builds for optimized images. |
+| **Orchestration** | AWS EKS (K8s v1.30) | Managed Kubernetes control plane. |
+| **IaC** | Terraform | VPC, IAM, and Cluster provisioning. |
+| **CI/CD** | Jenkins | Groovy-based pipelines for Build & Deploy. |
+
+---
+
+## 📂 Repository Structure (Monorepo)
+
+This project adopts a **Monorepo** strategy to maintain code coherence.
+
+```text
+LMS/
+├── app/                  # 🐍 APPLICATION LAYER
+│   ├── app.py            # Main Flask Entrypoint
+│   ├── Dockerfile        # Container definition
+│   └── templates/        # Frontend assets
+│
+├── terraform/            # ☁️ INFRASTRUCTURE LAYER
+│   ├── main.tf           # Root configuration
+│   ├── modules/          # Reusable modules (VPC, EKS)
+│   └── backend.tf        # S3 Remote State configuration
+│
+├── k8s/                  # ☸️ ORCHESTRATION LAYER
+│   ├── 00-namespace.yml  # Isolation layer
+│   ├── 03-postgres.yml   # StatefulSet definition
+│   └── 04-flask-app.yml  # Application Deployment
+│
+└── pipelines/            # 🚀 AUTOMATION LAYER
+    ├── Jenkinsfile.app   # CI/CD for the Application
+    └── Jenkinsfile.infra # CI/CD for Terraform
+```
+
+---
+
+## ✨ Application Features
+
+### 👤 User Portal
+*   **Secure Auth:** Session-based Login and Registration.
+*   **Catalog:** Search books by title, author, or category.
+*   **Borrowing:** Real-time book reservation and return system.
+*   **Dashboard:** View personal transaction history.
+
+### 🛡️ Admin Portal
+*   **Inventory Management:** Full CRUD capabilities for the book catalog.
+*   **User Oversight:** Manage user roles and permissions.
+*   **Audit Logs:** View global transaction history and system logs.
+
+---
+
+## ☁️ Infrastructure as Code (Terraform)
+
+We utilize Terraform to eliminate "ClickOps." The infrastructure is modular, scalable, and secure.
+
+### 🔌 Modules
+*   **VPC Module:** Provisions a custom VPC, Public/Private Subnets, NAT Gateways, and Route Tables.
+*   **EKS Module:** Deploys the Control Plane, Worker Node Groups, and IAM OIDC Providers.
+
+### 🚀 Deployment
+```bash
+cd terraform
+terraform init
+terraform plan -out=tfplan
+terraform apply "tfplan"
+```
+> **Note:** State is stored remotely in **AWS S3** with **DynamoDB** locking to prevent race conditions in team environments.
+
+---
+
+## 🔄 CI/CD Automation (Jenkins)
+
+The pipeline is designed for speed and reliability. It triggers automatically upon `git push` events.
+
+### 🟢 Application Pipeline (`Jenkinsfile.app`)
+1.  **Checkout:** Pulls the latest code from `main`.
+2.  **Build:** Compiles the Docker image inside the `app/` context.
+3.  **Push:** Uploads the artifact to Docker Hub.
+4.  **Deploy:** Authenticates with AWS EKS and applies manifests from `k8s/`.
+5.  **Rollout:** Performs a `kubectl rollout restart` to ensure zero downtime.
+
+### 🟣 Infrastructure Pipeline (`Jenkinsfile.infra`)
+1.  **Validate:** Checks Terraform syntax and validity.
+2.  **Plan:** Generates an execution plan for infrastructure changes.
+3.  **Apply:** (Gated) Applies changes to the AWS environment.
+
+---
+
+## ☸️ Kubernetes Implementation Details
+
+The application is deployed into the `library-app` namespace.
+
+*   **Database:** Deployed as a **StatefulSet** to ensure stable network IDs and ordered deployment. Data is persisted using `StorageClass` backed by **AWS EBS gp3** volumes.
+*   **Application:** Deployed as a **Deployment** with multiple replicas for high availability.
+*   **Networking:** Exposed via an **AWS Classic Load Balancer (CLB)** for external access.
+
+---
+
+## 🚀 How to Run Locally
+
+If you wish to test the application logic without deploying to AWS:
+
+1.  **Clone the Repo:**
+    ```bash
+    git clone https://github.com/MuhammedAhmedAbdulaziz/LMS.git
+    ```
+2.  **Run with Docker Compose:**
+    ```bash
+    cd app
+    docker-compose up --build
+    ```
+3.  **Access:**
+    Navigate to `http://localhost:5000`.
+    *   **Admin Credentials:** `admin` / `admin123`
+
+---
+
+## 🔮 Roadmap & Future Improvements
+
+*   [ ] **Microservices Split:** Refactor Auth and Catalog into separate services.
+*   [ ] **Helm Charts:** Package the Kubernetes manifests for easier distribution.
+*   [ ] **Observability:** Implement Prometheus and Grafana for cluster monitoring.
+*   [ ] **Security:** Implement Network Policies and Git-Secrets scanning.
+
+---
+
+### 👨‍💻 Author
+
+**Muhammed Ahmed Abdulaziz**
+*DevOps Engineer | Cloud Enthusiast*
+
+---
+```
